@@ -508,6 +508,19 @@ class SaturneDocumentModel extends CommonDocGenerator
                     } else {
                         $listLines->setVars($key, '', true, 'UTF-8');
                     }
+                }else if (preg_match('/qr_150dpi/', $key) || preg_match('/qr_150dpi$/', $key)) {
+                    // Image.
+                    if (file_exists($val)) {
+                        $listLines->setImageWithFixSize($key, $val,'2.54','2.54');
+                    } else if (dol_strlen($val) > 0){
+						if ($key == 'mycompany_logo') {
+							$listLines->setVars($key, $outputLangs->transnoentities('ErrorNoSocietyLogo'), true, 'UTF-8');
+						} else {
+							$listLines->setVars($key, $outputLangs->transnoentities('ErrorFileNotFound'), true, 'UTF-8');
+						}
+                    } else {
+                        $listLines->setVars($key, '', true, 'UTF-8');
+                    }
                 } elseif (preg_match('/signature/', $key) && is_file($val)) {
                     $imageSize = getimagesize($val);
                     $newWidth  = 200;
@@ -803,9 +816,11 @@ class SaturneDocumentModel extends CommonDocGenerator
                 $hookmanager->executeHooks('ODTSubstitution', $parameters, $this, $action); // Note that $action and $object may have been modified by some hooks
 
                 // Open and load template
-                require_once ODTPHP_PATH . 'odf.php';
+
+                //require_once ODTPHP_PATH . 'odf.php';
+                dol_include_once('/saturne/class/saturneodf.php');
                 try {
-                    $odfHandler = new odf(
+                    $odfHandler = new SaturneOdf(
                         $srcTemplatePath,
                         [
                             'PATH_TO_TMP'     => $conf->$moduleNameLowerCase->dir_temp,
