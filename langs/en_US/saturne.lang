@@ -36,33 +36,35 @@ ReadAdminPage = Access the module configuration %s
 #
 
 # Data
-ModuleSettings                    = Settings
-ModuleSetup                       = Module configuration %s
-Contributing                      = Contributing
-SaturneModule                     = %s module
-GeneralConfig                     = General configuration
-ConfigData                        = Configurable data from %s
-Configs                           = Configurable % data
-ConfigDatas                       = Configurations
-ModuleMediaGallery                = Configuration of %s media
-SavedMediaData                    = Recording of media data
-EnablePublicInterface             = Public interface
-EnablePublicInterfaceDescription  = Activation of public interfaces
-ShowCompanyLogo                   = Display the company logo
-ShowCompanyLogoDescription        = Enable this option to hide the company logo in the public interface pages
-UseCaptcha                        = Graphic code (CAPTCHA)
-UseCaptchaDescription             = Use of graphic code (CAPTCHA) on public interface pages
-UseAllEmailMode                   = Use of all email configuration modes
-UseAllEmailModeDescription        = Allow the use of all email configuration modes by default, only SMTP mode is allowed
-SignaturePublicInterfaceForbidden = No access to the public signature interface
-ShowSpecimen                      = See signatures on specimen documents
-ShowSpecimenDescription           = Allows viewing of signatures on specimen documents
-ObjectVisibleDescription          = Display the %s field
-SavedConfig                       = Saved configuration
-ErrorSavedConfig                  = An error occurred during the configuration
-Config                            = Configuration
-Extrafields                       = Extra attributes
-
+ModuleSettings                      = Settings
+ModuleSetup                         = Module configuration %s
+Contributing                        = Contributing
+SaturneModule                       = %s module
+GeneralConfig                       = General configuration
+ConfigData                          = Configurable data from %s
+Configs                             = Configurable % data
+ConfigDatas                         = Configurations
+ModuleMediaGallery                  = Configuration of %s media
+SavedMediaData                      = Recording of media data
+EnablePublicInterface               = Public interface
+EnablePublicInterfaceDescription    = Activation of public interfaces
+ShowCompanyLogo                     = Display the company logo
+ShowCompanyLogoDescription          = Enable this option to hide the company logo in the public interface pages
+UseCaptcha                          = Graphic code (CAPTCHA)
+UseCaptchaDescription               = Use of graphic code (CAPTCHA) on public interface pages
+UseAllEmailMode                     = Use of all email configuration modes
+UseAllEmailModeDescription          = Allow the use of all email configuration modes by default, only SMTP mode is allowed
+UseFastUploadImprovement            = Improved fast image loading
+UseFastUploadImprovementDescription = Activate this option to improve image loading speed <br> Option available : <ul><li>Image rotation</li><li>Drawing on the image</li><li>Saving the image on a reduced format</li></ul>
+SignaturePublicInterfaceForbidden   = No access to the public signature interface
+ShowSpecimen                        = See signatures on specimen documents
+ShowSpecimenDescription             = Allows viewing of signatures on specimen documents
+ObjectVisibleDescription            = Display the %s field
+SavedConfig                         = Saved configuration
+ErrorSavedConfig                    = An error occurred during the configuration
+Config                              = Configuration
+Extrafields                         = Extra attributes
+ClickHereToGoToTheConfigPage        = Click here to go to the configuration page
 
 # Mod Numbering
 NumberingModule = Numbering model
@@ -70,11 +72,13 @@ NumberingModuleDet = Numbering model lines
 StandardModel   = Returns the number in the form %syymm-nnnn where yy is the year, mm is the month and nnnn is a sequential counter without break and without reset.
 
 # ODT Template
-YourDocuments          = Documents
-DocumentTemplate       = Model documents
-ODTDefaultTemplateName = Default ODT of documents
-ErrorFileNotFound      = File not found
-ErrorNoSocietyLogo     = No company logo found
+YourDocuments               = Documents
+DocumentTemplate            = Model documents
+ODTDefaultTemplateName      = Default ODT of documents
+ErrorFileNotFound           = File not found
+ErrorNoSocietyLogo          = No company logo found
+CustomODT                   = Custom ODT of documents
+ErrorWrongFileNameExtension = Error: wrong file extension %s
 
 # Trigger
 ConfTrigger                 = Event configuration
@@ -105,6 +109,18 @@ EnableSaturne           = Please activate the Saturn module to access this page
 
 
 #
+# Public Interface - Interface publique
+#
+
+# Data - Donnée
+PublicInterfaceObject                  = Public interface %s
+PublicInterfaceUseSignatoryDescription = Using the signature on the public interface
+PublicInterfaceUser                    = Default user
+PublicInterfaceUserDescription         = User used on the public interface
+PublicInterfaceForbidden               = No access to public interface %s
+
+
+#
 # PWA - Progressive Web App
 #
 
@@ -121,13 +137,16 @@ GeneratePWAQRCodeDescription  = This option generates the QRCode for the progres
 #
 
 # Data
-ModuleArea             = Welcome to %s
-ModuleUpdate           = Update of %s :
-ModuleHasBeenUpdatedTo = %s has been updated to %s
-ModulePatchNote        = Update note %s %s
-ShowPatchNote          = See the update note
-DontShowPatchNote      = No longer display the update note
-ChooseBoxToAdd         = Add widget to dashboard
+ModuleArea                 = Welcome to %s
+ModuleUpdate               = Update of %s :
+ModuleHasBeenUpdatedTo     = %s has been updated to %s
+ModulePatchNote            = Update note %s %s
+ShowPatchNote              = See the update note
+DontShowPatchNote          = No longer display the update note
+ChooseBoxToAdd             = Add widget to dashboard
+SetupDefaultDataNotCreated = You have not created default data for %s
+HowToSetupDefaultData      = To set up %s default data, please click on this link :
+ConfigDefaultData          = Configure %s default data
 
 
 
@@ -211,3 +230,14 @@ EntityName   = Entity name
 # Data
 Tools      = Tools
 ExportData = Export my data
+
+
+
+#
+# Other
+#
+
+# Data
+SocietyAttendants = Third party external attendants
+Back = Back
+DeleteFiles = Are you sure that you want to delete <span class="filesLinked"></span> selected files ?

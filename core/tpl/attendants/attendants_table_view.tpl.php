@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2022-2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2022-2024 EVARISK <technique@evarisk.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 /**
  * \file    core/tpl/attendants/attendants_table_view.tpl.php
  * \ingroup saturne
- * \brief   Template page for attendants table.
+ * \brief   Template page for attendants table
  */
 
 /**
@@ -29,7 +29,7 @@
  * Variable   : $signatoryRole, $signatories, $moduleNameLowerCase, $permissiontoadd
  */
 
-print load_fiche_titre($langs->trans('Attendants') . (($attendantTableMode == 'advanced') ? ' - ' . $langs->trans($signatoryRole) : ''), '', '');
+print load_fiche_titre($langs->trans($attendantTableMode == 'advanced' ? $signatoryRole : 'Attendants'), '', '');
 
 if (!empty($signatories) || (empty($signatories) && $object->status == $object::STATUS_DRAFT)) {
     print '<table class="border centpercent tableforfield">';
@@ -42,7 +42,7 @@ if (!empty($signatories) || (empty($signatories) && $object->status == $object::
     }
     print '<td class="center">' . $langs->trans('SignatureLink') . '</td>';
     print '<td class="center">' . $langs->trans('SendMailDate') . '</td>';
-    print '<td class="' . ($conf->browser->layout != 'classic' ? 'hidden': '') .'">' . $langs->trans('SignatureDate') . '</td>';
+    print '<td class="' . ($conf->browser->layout != 'classic' ? 'hidden': '') . '">' . $langs->trans('SignatureDate') . '</td>';
     print '<td class="center">' . $langs->trans('Status') . '</td>';
     print '<td class="center">' . $langs->trans('Attendance') . '</td>';
     print '<td class="center">' . $langs->trans('SignatureActions') . '</td>';
@@ -77,22 +77,9 @@ if (is_array($signatories) && !empty($signatories) && $signatories > 0) {
             }
         }
         print '</td><td>';
-        if ($element->element_type == 'user') {
-            $usertmp->fetch($element->element_id);
-            print $usertmp->getNomUrl(1, ($conf->browser->layout != 'classic' ? 'nolink': ''), 0, 0, 24, 1);
-            if (!empty($usertmp->job)) {
-                print ' - ' . $usertmp->job;
-            }
-        } else {
-            $contact->fetch($element->element_id);
-            if ($conf->browser->layout != 'classic') {
-                print img_picto('', 'company') . ' ' . $contact->getFullName($langs, 1);
-            } else {
-                print $contact->getNomUrl(1);
-            }
-            if (!empty($contact->job)) {
-                print ' - ' . $contact->job;
-            }
+        print $element->getNomUrl(-1, 'blank');
+        if (!empty($element->job)) {
+            print ' - ' . $element->job;
         }
         if ($attendantTableMode == 'simple') {
             print '</td><td class="center ' . ($conf->browser->layout != 'classic' && $object->status > $object::STATUS_DRAFT ? 'hidden': '') . '">';
@@ -101,15 +88,15 @@ if (is_array($signatories) && !empty($signatories) && $signatories > 0) {
         print '</td><td class="center copy-signatureurl-container">';
         if ($object->status == $object::STATUS_VALIDATED) {
             if ((!$user->rights->$moduleNameLowerCase->$objectType->read && $user->rights->$moduleNameLowerCase->assignedtome->$objectType && ($element->element_id == $user->id || $element->element_id == $user->contact_id)) || $permissiontoadd) {
-                $signatureUrl = dol_buildpath('/custom/saturne/public/signature/add_signature.php?track_id=' . $element->signature_url . '&entity=' . $conf->entity . '&module_name=' . $moduleNameLowerCase . '&object_type=' . $object->element . '&document_type=' . $documentType . '&modal_to_open=modal-signature' . $element->id, 3);
-                print '<a href=' . $signatureUrl . ' target="_blank"><div class="wpeo-button button-primary" style="' . ($conf->browser->layout != 'classic' ? 'font-size: 25px;': '') . '"><i class="fas' . (($element->status == SaturneSignature::STATUS_SIGNED) ? ' fa-eye' : ' fa-signature') . '"></i></div></a>';
+                $signatureUrl = dol_buildpath('/custom/saturne/public/signature/add_signature.php?track_id=' . $element->signature_url . '&entity=' . $conf->entity . '&module_name=' . $moduleNameLowerCase . '&object_type=' . $object->element . '&document_type=' . $documentType, 3);
+                print '<a href=' . $signatureUrl . ' target="_blank"><div class="wpeo-button button-blue" style="' . ($conf->browser->layout != 'classic' ? 'font-size: 25px;': '') . '"><i class="fas' . (($element->status == SaturneSignature::STATUS_SIGNED) ? ' fa-eye' : ' fa-signature') . '"></i></div></a>';
                 print ' <i class="fas fa-clipboard copy-signatureurl" data-signature-url="' . $signatureUrl . '" style="color: #666;' .  ($conf->browser->layout != 'classic' ? 'display: none;': '') . '"></i>';
                 print '<span class="copied-to-clipboard" style="display: none;">' . '  ' . $langs->trans('CopiedToClipboard') . '</span>';
             }
         }
         print '</td><td class="center">';
         if ($object->status == $object::STATUS_VALIDATED && $element->signature == '') {
-            if (dol_strlen($element->email) || dol_strlen($usertmp->email) || dol_strlen($contact->email)) {
+            if (dol_strlen($element->email)) {
                 print dol_print_date($element->last_email_sent_date, 'dayhour', 'tzuser');
                 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
                 $nbEmailSent = 0;
@@ -127,7 +114,7 @@ if (is_array($signatories) && !empty($signatories) && $signatories > 0) {
                 print '<input type="hidden" name="action" value="send_email">';
                 print '<input type="hidden" name="signatoryID" value="' . $element->id . '">';
                 print '<input type="hidden" name="backtopage" value="' . $backtopage . '">';
-                print '<button type="submit" class="signature-email wpeo-button button-primary" style="' . ($conf->browser->layout != 'classic' ? 'font-size: 20px;': '') . '" value="' . $element->id . '">';
+                print '<button type="submit" class="signature-email wpeo-button button-blue" style="' . ($conf->browser->layout != 'classic' ? 'font-size: 20px;': '') . '" value="' . $element->id . '">';
                 print '<i class="fas fa-paper-plane"></i>';
                 print '</button>';
                 if ($nbEmailSent > 0) {
@@ -161,7 +148,7 @@ if (is_array($signatories) && !empty($signatories) && $signatories > 0) {
         if ($object->status <= $object::STATUS_VALIDATED && $permissiontoadd) {
             print '<div class="wpeo-dropdown dropdown-right attendance-container">';
             print '<input type="hidden" name="signatoryID" value="' . $element->id . '">';
-            print '<div class="dropdown-toggle wpeo-button ' . $cssButton . '" style="' . ($conf->browser->layout != 'classic' ? 'font-size: 20px;': '') . '"><i class="fas ' . $userIcon . '"></i></div>';
+            print '<div class="dropdown-toggle" style="' . ($conf->browser->layout != 'classic' ? 'font-size: 20px;': '') . '"><span class="wpeo-button ' . $cssButton . '"><i class="fas ' . $userIcon . ' button-icon"></i><i class="fas fa-edit button-add"></i></span></div>';
             print '<ul class="saturne-dropdown-content wpeo-gridlayout grid-3">';
             print '<li class="dropdown-item set-attendance" style="padding: 0;" value="0"><div class="wpeo-button button-green"><i class="fas fa-user"></i></div></li>';
             print '<li class="dropdown-item set-attendance" style="padding: 0;" value="1"><div class="wpeo-button"><i class="fas fa-user-clock"></i></div></li>';

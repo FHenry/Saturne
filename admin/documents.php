@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2021-2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2021-2024 EVARISK <technique@evarisk.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,10 +18,10 @@
 /**
  * \file    admin/documents.php
  * \ingroup saturne
- * \brief   Saturne documents page.
+ * \brief   Saturne documents page
  */
 
-// Load Saturne environment.
+// Load Saturne environment
 if (file_exists('../saturne.main.inc.php')) {
     require_once __DIR__ . '/../saturne.main.inc.php';
 } elseif (file_exists('../../saturne.main.inc.php')) {
@@ -30,37 +30,41 @@ if (file_exists('../saturne.main.inc.php')) {
     die('Include of saturne main fails');
 }
 
-// Get module parameters.
-$moduleName          = GETPOST('module_name', 'alpha');
+// Get module parameters
+$moduleName = GETPOST('module_name');
+if (dol_strlen($moduleName) > 0 && strpos($moduleName, '#') !== false) {
+    $moduleName = explode('#', $moduleName)[0];
+}
 $moduleNameLowerCase = strtolower($moduleName);
 
-// Load Dolibarr libraries.
+// Load Dolibarr libraries
 require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 
-// Load Module libraries.
+// Load Module libraries
 require_once __DIR__ . '/../../' . $moduleNameLowerCase . '/lib/' . $moduleNameLowerCase . '.lib.php';
 
-// Global variables definitions.
+// Global variables definitions
 global $conf, $db, $hookmanager, $langs, $user;
 
-// Load translation files required by the page.
+// Load translation files required by the page
 saturne_load_langs(['admin']);
 
-// Initialize view objects.
+// Initialize view objects
 $form = new Form($db);
 
-// Get parameters.
+// Get parameters
 $action     = GETPOST('action', 'alpha');
-$value      = GETPOST('value', 'alpha');
+$modelName  = GETPOST('model_name', 'alpha');
 $type       = GETPOST('type', 'alpha');
 $const      = GETPOST('const', 'alpha');
 $label      = GETPOST('label', 'alpha');
-$modulepart = GETPOST('modulepart', 'aZ09'); // Used by actions_setmoduleoptions.inc.php.
+$modulepart = GETPOST('modulepart', 'aZ09'); // Used by actions_setmoduleoptions.inc.php
+$pageY      = GETPOST('page_y', 'int');
 
-$hookmanager->initHooks([$moduleNameLowerCase . 'admindocuments']); // Note that conf->hooks_modules contains array.
+$hookmanager->initHooks([$moduleNameLowerCase . 'admindocuments']); // Note that conf->hooks_modules contains array
 
-// Security check - Protection if external user.
+// Security check - Protection if external user
 $permissiontoread = $user->rights->$moduleNameLowerCase->adminpage->read;
 saturne_check_access($permissiontoread);
 
@@ -68,33 +72,26 @@ saturne_check_access($permissiontoread);
  * Actions
  */
 
-// Activate a model.
+// Actions set_mod, update_mask
+require_once __DIR__ . '/../core/tpl/actions/admin_conf_actions.tpl.php';
+
+// Activate a model
 if ($action == 'set') {
-    addDocumentModel($value, $type, $label, $const);
-    header('Location: ' . $_SERVER['PHP_SELF'] . '?module_name=' . $moduleName);
+    addDocumentModel($modelName, $type, $label, $const);
+    header('Location: ' . $_SERVER['PHP_SELF'] . '?module_name=' . $moduleName . '&page_y=' . $pageY);
+    exit;
 } elseif ($action == 'del') {
-    delDocumentModel($value, $type);
-    header('Location: ' . $_SERVER['PHP_SELF'] . '?module_name=' . $moduleName);
+    delDocumentModel($modelName, $type);
+    header('Location: ' . $_SERVER['PHP_SELF'] . '?module_name=' . $moduleName . '&page_y=' . $pageY);
+    exit;
 }
 
-// Set default model.
+// Set default model
 if ($action == 'setdoc') {
-    $constforval = strtoupper($moduleName) . '_' . strtoupper($type) . '_DEFAULT_MODEL';
-    $label       = '';
-
-    if (dolibarr_set_const($db, $constforval, $value, 'chaine', 0, '', $conf->entity)) {
-        $conf->global->$constforval = $value;
-    }
-
-    // Active model.
-    $ret = delDocumentModel($value, $type);
-
-    if ($ret > 0) {
-        $ret = addDocumentModel($value, $type, $label);
-    }
-} elseif ($action == 'setmod') {
-    $constforval = strtoupper($moduleName) . '_' . strtoupper($type) . '_ADDON';
-    dolibarr_set_const($db, $constforval, $value, 'chaine', 0, '', $conf->entity);
+    $confName = dol_strtoupper($moduleName . '_' . $type) . '_DEFAULT_MODEL';
+    dolibarr_set_const($db, $confName, $modelName, 'chaine', 0, '', $conf->entity);
+    header('Location: ' . $_SERVER['PHP_SELF'] . '?module_name=' . $moduleName . '&page_y=' . $pageY);
+    exit;
 }
 
 if ($action == 'deletefile' && $modulepart == 'ecm' && !empty($user->admin)) {
@@ -123,7 +120,8 @@ if ($action == 'deletefile' && $modulepart == 'ecm' && !empty($user->admin)) {
     $result = dol_delete_file($filetodelete);
     if ($result > 0) {
         setEventMessages($langs->trans('FileWasRemoved', GETPOST('file')), null);
-        header('Location: ' . $_SERVER['PHP_SELF']);
+        header('Location: ' . $_SERVER['PHP_SELF'] . '?module_name=' . $moduleName . '&page_y=' . $pageY);
+        exit;
     }
 }
 
@@ -166,9 +164,9 @@ if ($action == 'setModuleOptions') {
                     setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentitiesnoconv('File')), null, 'errors');
                 }
             }
-            if (preg_match('/__.*__/', $_FILES['userfile']['name'][$key])) {
+            if (pathinfo($_FILES['userfile']['name'], PATHINFO_EXTENSION) != 'odt') {
                 $error++;
-                setEventMessages($langs->trans('ErrorWrongFileName'), null, 'errors');
+                setEventMessages($langs->trans('ErrorWrongFileNameExtension', $_FILES['userfile']['name']), [], 'errors');
             }
         }
 
@@ -179,7 +177,6 @@ if ($action == 'setModuleOptions') {
             }
         }
     }
-
 }
 
 if ($action == 'update_documents_config') {
@@ -194,37 +191,41 @@ if ($action == 'update_documents_config') {
 }
 
 if ($action == 'specimen') {
-
-    $modele = GETPOST('module', 'alpha');
-    $documentType = preg_split('/_/', $modele)[1];
+    $documentType = explode('_', $modelName)[1];
 
     require_once __DIR__ . '/../../' . $moduleNameLowerCase . '/class/' . $moduleNameLowerCase . 'documents/' . $documentType . '.class.php';
 
-    $objectDocument = new $documentType($db);
-    $objectDocument->initAsSpecimen();
+    $document = new $documentType($db);
 
     // Search template files
-    $dir = __DIR__ . "/../../". $moduleNameLowerCase . "/core/modules/" . $moduleNameLowerCase . "/" . $moduleNameLowerCase . "documents/" . $documentType . '/';
-    $file = 'pdf_' .  $modele . ".modules.php";
+    $dir = __DIR__ . '/../../' . $moduleNameLowerCase . '/core/modules/' . $moduleNameLowerCase . '/' . $moduleNameLowerCase . 'documents/' . $documentType . '/';
+    $file = 'pdf_' .  $modelName . '.modules.php';
     if (file_exists($dir . $file)) {
-        $classname = 'pdf_' . $modele;
-        require_once $dir . $file;
+        $moreParams['object']     = new stdClass();
+        $moreParams['user']       = $user;
+        $moreParams['specimen']   = 1;
+        $moreParams['zone']       = 'public';
+        $moreParams['objectType'] = str_replace('document', '', $documentType);
 
-        $obj = new $classname($db);
-
-        $modulePart = str_replace('document', '', $documentType);
-
-        if ($obj->write_file($objectDocument, $langs, ['object' => $objectDocument]) > 0) {
-            header("Location: " . DOL_URL_ROOT . "/document.php?modulepart=". $modulePart ."&file=SPECIMEN.pdf");
-            return;
+        $result = $document->generateDocument($modelName, $langs, 0, 0, 0, $moreParams);
+        if ($result <= 0) {
+            setEventMessages($document->error, $document->errors, 'errors');
         } else {
-            setEventMessages($obj->error, $obj->errors, 'errors');
-            dol_syslog($obj->error, LOG_ERR);
+            setEventMessages($langs->trans('FileGenerated') . ' - ' . '<a href=' . DOL_URL_ROOT . '/document.php?modulepart=' . $moreParams['objectType'] . '&file=' . urlencode('public_specimen/' . $document->last_main_doc) . '&entity=' . $conf->entity . '"' . '>' . $document->last_main_doc . '</a>', []);
+            header('Location: ' . $_SERVER['PHP_SELF'] . '?module_name=' . $moduleName . '&page_y=' . $pageY);
+            exit;
         }
-    } else {
-        setEventMessages($langs->trans("ErrorModuleNotFound"), null, 'errors');
-        dol_syslog($langs->trans("ErrorModuleNotFound"), LOG_ERR);
     }
+}
+
+if ($action == 'download_template') {
+    $fileName = GETPOST('filename');
+    dol_copy(DOL_DOCUMENT_ROOT . '/custom/' . $moduleNameLowerCase . '/documents/doctemplates/' . $type . '/' . $fileName, DOL_DOCUMENT_ROOT . '/custom/' . $moduleNameLowerCase . '/documents/temp/' . $fileName);
+}
+
+if ($action == 'remove_file') {
+    $fileName = GETPOST('filename');
+    dol_delete_file(DOL_DOCUMENT_ROOT . '/custom/' . $moduleNameLowerCase . '/documents/temp/' . $fileName);
 }
 
 /*
@@ -236,6 +237,12 @@ $help_url = 'FR:Module_' . $moduleName;
 
 saturne_header(0, '', $title, $help_url);
 
+?>
+    <script>
+        history.replaceState(null, '', window.saturne.toolbox.replaceUrlAnchor());
+    </script>
+<?php
+
 $parameters = [];
 $reshook    = $hookmanager->executeHooks('saturneAdminDocumentData', $parameters); // Note that $action and $object may have been modified by some hooks
 if (empty($reshook)) {
@@ -245,7 +252,7 @@ if (empty($reshook)) {
 // Subheader
 $selectorAnchor = '<select onchange="location = this.value;">';
 foreach ($types as $type => $documentType) {
-    $selectorAnchor .= '<option value="#' . $langs->trans($type) . '">' . $langs->trans($type) . '</option>';
+    $selectorAnchor .= '<option value="#' . dol_strtolower($type) . '">' . $langs->trans($type) . '</option>';
 }
 $selectorAnchor .= '</select>';
 
@@ -346,7 +353,7 @@ foreach ($types as $type => $documentData) {
 
     $object = new $type($db);
 
-    print load_fiche_titre($langs->trans($type), '', $documentData['picto'], 0, $langs->trans($type));
+    print load_fiche_titre($langs->trans($type), '', $documentData['picto'], 0, dol_strtolower($type));
 
     $documentPath = true;
 

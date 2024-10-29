@@ -98,18 +98,17 @@ function saturne_show_medias(string $moduleName, string $modulepart = 'ecm', str
                     <div class="center clickable-photo clickable-photo<?php echo $j; ?>" value="<?php echo $j; ?>">
                         <figure class="photo-image">
                             <?php
-                            $filePreviewUrl = urlencode($fileName);
-                            $urladvanced = getAdvancedPreviewUrl($modulepart, $moduleName . '/medias/' . $filePreviewUrl, 0, 'entity=' . $conf->entity);
-                            ?>
-                            <a class="clicked-photo-preview" href="<?php echo $urladvanced; ?>"><i class="fas fa-2x fa-search-plus"></i></a>
-                            <?php if (image_format_supported($fileName) >= 0) : ?>
-                                <?php $fullpath = $path . '/' . urlencode($shownFileName) . '&entity=' . $conf->entity; ?>
-                                <input class="filename" type="hidden" value="<?php echo $fileName; ?>">
-                                <?php
-
-                                ?>
-                                <img class="photo photo<?php echo $j ?>" height="<?php echo $maxHeight; ?>" width="<?php echo $maxWidth; ?>" src="<?php echo $fullpath; ?>">
-                            <?php endif; ?>
+                            if (file_exists($filearray[$i]['path'] . '/thumbs/' . $shownFileName)) {
+                                $advancedPreviewUrl = getAdvancedPreviewUrl($modulepart, $moduleName . '/medias/' . urlencode($fileName), 0, 'entity=' . $conf->entity);
+                                $fullpath           = $path . '/' . urlencode($shownFileName) . '&entity=' . $conf->entity;
+                                print '<input class="filename" type="hidden" value="' . $fileName . '">';
+                                print '<a class="clicked-photo-preview" href="' . $advancedPreviewUrl . '"><i class="fas fa-2x fa-search-plus"></i></a>';
+                                print '<img class="photo photo' . $j . '" width="' . $maxWidth . '" height="' . $maxHeight . '" src="' . $fullpath . '">';
+                            } else {
+                                print '<input type="hidden" class="fullname" data-fullname="' . $filearray[$i]['fullname'] . '">';
+                                print '<i class="clicked-photo-preview regenerate-thumbs fas fa-redo"></i>';
+                                print '<img class="photo photo' . $j . '" width="' . $maxWidth . '" height="' . $maxHeight . '" src="' . DOL_URL_ROOT . '/public/theme/common/nophoto.png">';
+                            } ?>
                         </figure>
                         <?php print saturne_get_media_linked_elements($moduleName, $fileName); ?>
                         <div class="title"><?php echo $fileName; ?></div>
@@ -193,7 +192,7 @@ function saturne_show_medias_linked(string $modulepart = 'ecm', string $sdir, $s
 
 			if (($show_only_favorite && ($object->$favorite_field == $fileName || !$favoriteExists)) || !$show_only_favorite) {
 				if ($showdiv) {
-					$return .= '<div class="media-container" style="margin-right: 20px; display: inline-block">';
+					$return .= '<div class="media-container">';
 				}
 
 				$return .= '<input hidden class="file-path" value="'. $filePath .'">';
@@ -240,10 +239,10 @@ function saturne_show_medias_linked(string $modulepart = 'ecm', string $sdir, $s
 						if ($usesharelink) {
                             if (empty($maxHeight) || $photo_vignette && $imgarray['height'] > $maxHeight) {
                                 $return .= '<!-- Show thumb file -->';
-                                $return .= '<img width="' . $maxWidth . '" height="' . $maxHeight . '" class="photo '. $morecss .' photowithmargin" height="' . $maxHeight . '" src="' . DOL_URL_ROOT . '/custom/saturne/utils/viewimage.php?modulepart=' . $modulepart . '&entity=' . $conf->entity . '&file=' . urlencode($pdirthumb . $photo_vignette) . '" title="' . dol_escape_htmltag($alt) . '" data-object-id="' . $object->id . '">';
+                                $return .= '<img width="' . $maxWidth . '" height="' . $maxHeight . '" class="photo '. $morecss .' photowithmargin" height="' . $maxHeight . '" src="' . DOL_URL_ROOT . '/custom/saturne/utils/viewimage.php?modulepart=' . $modulepart . '&entity=' . $object->entity . '&file=' . urlencode($pdirthumb . $photo_vignette) . '" title="' . dol_escape_htmltag($alt) . '" data-object-id="' . $object->id . '">';
                             } else {
                                 $return .= '<!-- Show original file -->';
-                                $return .= '<img width="' . $maxWidth . '" height="' . $maxHeight . '" class="photo '. $morecss .' photowithmargin" src="' . DOL_URL_ROOT . '/custom/saturne/utils/viewimage.php?modulepart=' . $modulepart . '&entity=' . $conf->entity . '&file=' . urlencode($pdir . $photo) . '" title="' . dol_escape_htmltag($alt) . '" data-object-id="' . $object->id . '">';
+                                $return .= '<img width="' . $maxWidth . '" height="' . $maxHeight . '" class="photo '. $morecss .' photowithmargin" src="' . DOL_URL_ROOT . '/custom/saturne/utils/viewimage.php?modulepart=' . $modulepart . '&entity=' . $object->entity . '&file=' . urlencode($pdir . $photo) . '" title="' . dol_escape_htmltag($alt) . '" data-object-id="' . $object->id . '">';
                             }
 						} else {
 							if (empty($maxHeight) || $photo_vignette && $imgarray['height'] > $maxHeight) {
@@ -307,7 +306,14 @@ function saturne_show_medias_linked(string $modulepart = 'ecm', string $sdir, $s
 						</div>';
 				}
 				if ($show_unlink_button) {
-					$return .=
+                    $confirmationParams = [
+                        'picto'             => 'fontawesome_fa-unlink_fas_#e05353',
+                        'color'             => '#e05353',
+                        'confirmationTitle' => 'ConfirmUnlinkMedia',
+                        'buttonParams'      => ['No' => 'button-blue marginrightonly confirmation-close', 'Yes' => 'button-red confirmation-delete']
+                    ];
+                    require __DIR__ . '/../core/tpl/utils/confirmation_view.tpl.php';
+                    $return .=
 						'<div class="wpeo-button button-square-50 button-grey ' . $object->element . ' media-gallery-unlink" value="' . $object->id . '">
 							<input class="element-linked-id" type="hidden" value="' . ($object->id > 0 ? $object->id : 0) . '">
 							<input class="filename" type="hidden" value="' . $photo . '">

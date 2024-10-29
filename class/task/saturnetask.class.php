@@ -98,7 +98,11 @@ class SaturneTask extends Task
 	 */
 	public function getTasksByProgress($projectId = 0)
 	{
-        global $conf, $langs, $form;
+        global $conf, $langs;
+
+        require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
+
+        $form = new Form($this->db);
 
         // Graph Title parameters
         $array['title'] = $form->textwithpicto($langs->transnoentities('TasksRepartition'), $langs->transnoentities('TasksFromProject'));
@@ -178,7 +182,7 @@ class SaturneTask extends Task
 	 */
 	public function getNomUrl($withpicto = 0, $option = '', $mode = 'task', $addlabel = 0, $sep = ' - ', $notooltip = 0, $saveLastSearchValue = -1, $showFavorite = 0)
 	{
-		global $conf, $langs, $user;
+		global $action, $conf, $hookmanager, $langs, $user;
 
 		if ( ! empty($conf->dol_no_mouse_hover)) $notooltip = 1; // Force disable tooltips
 
@@ -232,6 +236,15 @@ class SaturneTask extends Task
 			$result .= $favoriteStar;
 		}
 
+        $hookmanager->initHooks(['saturnetaskdao']);
+        $parameters = ['id' => $this->id, 'getnomurl' => &$result];
+        $resHook    = $hookmanager->executeHooks('getNomUrl', $parameters, $this, $action); // Note that $action and $object may have been modified by some hooks
+        if ($resHook > 0) {
+            $result = $hookmanager->resPrint;
+        } else {
+            $result .= $hookmanager->resPrint;
+        }
+
 		return $result;
 	}
 
@@ -267,6 +280,7 @@ class SaturneTask extends Task
             $sql .= " ptt.element_datehour AS element_datehour,";
             $sql .= " ptt.element_date_withhour AS element_date_withhour,";
             $sql .= " ptt.element_duration AS element_duration,";
+            $sql .= " ptt.elementtype AS elementtype,";
         } else {
             $sql .= " ptt.fk_task AS fk_element,";
             $sql .= " ptt.task_date AS element_date,";

@@ -58,7 +58,7 @@ class SaturneDocuments extends SaturneObject
     /**
      * @var int Does object support extrafields ? 0=No, 1=Yes
      */
-    public int $isextrafieldmanaged = 1;
+    public $isextrafieldmanaged = 1;
 
     /**
      * @var array Array with all fields and their property. Do not use it as a static var. It may be modified by constructor.
@@ -131,7 +131,7 @@ class SaturneDocuments extends SaturneObject
     /**
      * @var string Module name.
      */
-    public string $module_name;
+    public string $module_name = '';
 
     /**
      * @var string|null Json.
@@ -156,7 +156,7 @@ class SaturneDocuments extends SaturneObject
     /**
      * @var string Object parent type.
      */
-    public string $parent_type;
+    public string $parent_type = '';
 
     /**
      * @var int Object parent ID.
@@ -166,7 +166,7 @@ class SaturneDocuments extends SaturneObject
     /**
      * @var int User ID.
      */
-    public int $fk_user_creat;
+    public $fk_user_creat;
 
     /**
      * Constructor.
@@ -196,10 +196,12 @@ class SaturneDocuments extends SaturneObject
         $this->date_creation = $this->db->idate($now);
         $this->tms           = $now;
         $this->status        = 1;
-        $this->type          = $this->element;
+        if (empty($this->type)) {
+            $this->type = $this->element;
+        }
         $this->module_name   = $this->module;
-        $this->parent_id     = $parentObject->id;
-        $this->parent_type   = $parentObject->element_type ?: $parentObject->element;
+        $this->parent_id     = $parentObject->id ?: 0;
+        $this->parent_type   = $parentObject->element_type ?: $parentObject->element ?: '';
         $this->fk_user_creat = $user->id ?: 1;
 
         //$this->DocumentFillJSON($this);
@@ -250,8 +252,9 @@ class SaturneDocuments extends SaturneObject
         }
 
         $result = $this->commonGenerateDocument($modelpath, $modele, $outputlangs, $hidedetails, $hidedesc, $hideref, $moreparams);
-
-        $this->call_trigger(strtoupper($this->type) . '_GENERATE', $moreparams['user']);
+        if ($result > 0) {
+            $this->call_trigger(strtoupper($this->type) . '_GENERATE', $moreparams['user']);
+        }
 
         return $result;
     }

@@ -58,7 +58,7 @@ class SaturneCertificate extends SaturneObject
 	/**
 	 * @var int Does object support extrafields ? 0 = No, 1 = Yes.
 	 */
-	public int $isextrafieldmanaged = 1;
+	public $isextrafieldmanaged = 1;
 
     /**
      * @var string Last output from end job execution.
@@ -271,12 +271,12 @@ class SaturneCertificate extends SaturneObject
     /**
      * @var int User ID.
      */
-    public int $fk_user_creat;
+    public $fk_user_creat;
 
     /**
      * @var int|null User ID.
      */
-    public ?int $fk_user_modif;
+    public $fk_user_modif;
 
     /**
      * Constructor.

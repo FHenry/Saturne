@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2021-2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2021-2024 EVARISK <technique@evarisk.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -55,11 +55,11 @@ class SaturneDashboard
     /**
      * Load dashboard info
      *
-     * @param array  $moreParams Parameters for load dashboard info
+     * @param array|null  $moreParams Parameters for load dashboard info
      *
      * @return array
      */
-    public function load_dashboard(array $moreParams = []): array
+    public function load_dashboard(?array $moreParams = []): array
     {
         require_once __DIR__ . '/../../' . $this->module . '/class/' . $this->module . 'dashboard.class.php';
 
@@ -88,12 +88,12 @@ class SaturneDashboard
     /**
      * Show dashboard
      *
-     * @param array      $moreParams    Parameters for load dashboard info
+     * @param array|null      $moreParams    Parameters for load dashboard info
      *
      * @return void
      * @throws Exception
      */
-    public function show_dashboard(array $moreParams = [])
+    public function show_dashboard(?array $moreParams = [])
     {
         global $conf, $form, $langs, $moduleNameLowerCase, $user;
 
@@ -128,7 +128,6 @@ class SaturneDashboard
             print ajax_combobox('boxcombo');
         }
         print '</div>';
-        print '<div class="fichecenter">';
 
         if (is_array($dashboards['widgets']) && !empty($dashboards['widgets'])) {
             $widget = '';
@@ -149,9 +148,32 @@ class SaturneDashboard
                         for ($i = 0; $i < count($dashboardWidget['label']); $i++) {
                             if (!empty($dashboardWidget['label'][$i])) {
                                 $widget .= '<span class=""><strong>' . $dashboardWidget['label'][$i] . ' : ' . '</strong>';
-                                $widget .= '<span class="classfortooltip badge badge-info" title="' . $dashboardWidget['label'][$i] . ' : ' . $dashboardWidget['content'][$i] . '" >' . $dashboardWidget['content'][$i] . '</span>';
-                                $widget .= (!empty($dashboardWidget['tooltip'][$i]) ? $form->textwithpicto('', $langs->transnoentities($dashboardWidget['tooltip'][$i])) : '') . '</span>';
+                                if (isset($dashboardWidget['content'][$i]) && $dashboardWidget['content'][$i] !== '') {
+                                    $widget .= '<span class="classfortooltip badge badge-info">' . $dashboardWidget['content'][$i] . '</span>';
+                                    $widget .= (!empty($dashboardWidget['tooltip'][$i]) ? $form->textwithpicto('', $langs->transnoentities($dashboardWidget['tooltip'][$i])) : '') . '</span>';
+                                    if (isset($dashboardWidget['moreContent'][$i]) && $dashboardWidget['moreContent'][$i] !== '') {
+                                        $widget .= $dashboardWidget['moreContent'][$i];
+                                    }
+                                } else {
+                                    $widget .= $dashboardWidget['customContent'][$i];
+                                }
                                 $widget .= '<br>';
+                            }
+                        }
+                        if (is_array($dashboardWidget['moreParams']) && (!empty($dashboardWidget['moreParams']))) {
+                            foreach ($dashboardWidget['moreParams'] as $dashboardWidgetMoreParamsKey => $dashboardWidgetMoreParams) {
+                                switch ($dashboardWidgetMoreParamsKey) {
+                                    case 'links' :
+                                        if (is_array($dashboardWidget['moreParams']['links']) && (!empty($dashboardWidget['moreParams']['links']))) {
+                                            foreach ($dashboardWidget['moreParams']['links'] as $dashboardWidgetMoreParamsLink) {
+                                                $widget .= '<a class="' . $dashboardWidgetMoreParamsLink['moreCSS'] . '" href="' . dol_buildpath($dashboardWidgetMoreParamsLink['url'], 1) . '" target="_blank">' . img_picto($langs->trans('Url'), 'globe', 'class="paddingrightonly"') . $langs->transnoentities($dashboardWidgetMoreParamsLink['linkName']) . '</a><br>';
+                                            }
+                                        }
+                                        break;
+                                    default :
+                                        $widget .= $dashboardWidgetMoreParams;
+                                        break;
+                                }
                             }
                         }
                         $widget .= '</div>';
@@ -190,9 +212,18 @@ class SaturneDashboard
                             }
                             if ($nbDataset > 0) {
                                 if (is_array($dashboardGraph['labels']) && !empty($dashboardGraph['labels'])) {
-                                    foreach ($dashboardGraph['labels'] as $dashboardGraphLabel) {
+                                    foreach ($dashboardGraph['labels'] as $key => $dashboardGraphLabel) {
                                         $dashboardGraphLegend[$uniqueKey][] = $dashboardGraphLabel['label'];
-                                        $dashboardGraphColor[$uniqueKey][]  = $dashboardGraphLabel['color'];
+                                        if (isset($dashboardGraphLabel['color'])) {
+                                            if (dol_strlen($dashboardGraphLabel['color']) > 0) {
+                                                $dashboardGraphColor[$uniqueKey][] = $dashboardGraphLabel['color'];
+                                            } else {
+                                                // If only one color is defined in category, the others will be black
+                                                // If no color is defined, all the colors will be defined by global $theme_datacolor
+                                                // To avoid black color we better define a color instead of empty
+                                                $dashboardGraphColor[$uniqueKey][] = $this->getColorRange($key);
+                                            }
+                                        }
                                     }
                                 }
 
@@ -217,13 +248,25 @@ class SaturneDashboard
                                 if ($dashboardGraph['dataset'] >= 2) {
                                     $graph->SetLegend($dashboardGraphLegend[$uniqueKey]);
                                 }
-                                $graph->SetDataColor($dashboardGraphColor[$uniqueKey]);
+                                if (isset($dashboardGraphColor[$uniqueKey])) {
+                                    $graph->SetDataColor($dashboardGraphColor[$uniqueKey]);
+                                }
                                 $graph->SetType([$dashboardGraph['type'] ?? 'pie']);
                                 $graph->SetWidth($dashboardGraph['width'] ?? $width);
                                 $graph->SetHeight($dashboardGraph['height'] ?? $height);
                                 $graph->setShowLegend($dashboardGraph['showlegend'] ?? 2);
                                 $graph->draw($fileName[$uniqueKey], $fileUrl[$uniqueKey]);
-                                print '<div>';
+                                print '<div class="' . $dashboardGraph['moreCSS'] . '">';
+
+                                $downloadCSV  = '<form method="POST" action="' . $_SERVER['PHP_SELF'] . (GETPOSTISSET('id') ? '?id=' . GETPOST('id') : '') . '">';
+                                $downloadCSV .= '<input type="hidden" name="token" value="' . newToken() . '">';
+                                $downloadCSV .= '<input type="hidden" name="action" value="generate_csv">';
+                                $downloadCSV .= '<input type="hidden" name="graph" value="' . http_build_query($dashboardGraph) . '">';
+                                $downloadCSV .= '<button class="wpeo-button no-load button-grey">';
+                                $downloadCSV .= img_picto('ExportCSV', 'fontawesome_file-csv_fas_#31AD29_15px');
+                                $downloadCSV .= '</button></form>';
+                                $dashboardGraph['morehtmlright'] .= $downloadCSV;
+
                                 print load_fiche_titre($dashboardGraph['title'], $dashboardGraph['morehtmlright'], $dashboardGraph['picto']);
                                 print $graph->show();
                                 print '</div>';
@@ -245,13 +288,13 @@ class SaturneDashboard
                         print '<table class="noborder centpercent">';
                         print '<tr class="liste_titre">';
                         foreach ($dashboardList['labels'] as $key => $dashboardListLabel) {
-                            print '<td class="nowraponall tdoverflowmax200' . (($key != 'Ref') ? ' center' : '') . '">' . $langs->transnoentities($dashboardListLabel) . '</td>';
+                            print '<td class="nowraponall tdoverflowmax200 ' . (($key != 'Ref') ? 'center' : '') . '">' . $langs->transnoentities($dashboardListLabel) . '</td>';
                         }
                         print '</tr>';
                         foreach ($dashboardList['data'] as $dashboardListDatasets) {
                             print '<tr class="oddeven">';
                             foreach ($dashboardListDatasets as $key => $dashboardGraphDataset) {
-                                print '<td class="nowraponall tdoverflowmax200' . (($key != 'Ref') ? ' center ' : '') . $dashboardGraphDataset['morecss'] . '">' . $dashboardGraphDataset['value'] . '</td>';
+                                print '<td class="nowraponall tdoverflowmax200 ' . (($key != 'Ref') ? 'center ' : '') . $dashboardGraphDataset['morecss'] . '"' . $dashboardGraphDataset['moreAttr'] . '>' . $dashboardGraphDataset['value'] . '</td>';
                             }
                             print '</tr>';
                         }
@@ -261,7 +304,18 @@ class SaturneDashboard
             }
         }
 
-        print '</div></div>';
         print '</form>';
+    }
+
+    /**
+     * get color range for key
+     *
+     * @param  int    $key Key to find in color array
+     * @return string
+     */
+    public static function getColorRange(int $key): string
+    {
+        $colorArray = ['#f44336', '#e81e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', '#ff5722', '#795548', '#9e9e9e', '#607d8b'];
+        return $colorArray[$key % count($colorArray)];
     }
 }
